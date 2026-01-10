@@ -1709,7 +1709,16 @@ def parse_model(d, ch, verbose=True):
                 args.insert(4, n)  # number of repeats
                 n = 1
         elif m is ResNetLayer:
-            c2 = args[1] if args[3] else args[1] * 4
+            # ResNetLayer(args): [input_channels, planes, stride, is_first, n_blocks]
+            c1 = ch[f]
+            # width-scale planes (args[1])
+            planes = args[1]
+            if planes != nc:
+                planes = make_divisible(min(planes, max_channels) * width, 8)
+            # force correct input channels across model scales
+            args = [c1, planes, *args[2:]]
+            # output channels
+            c2 = planes if args[3] else planes * 4
         elif m is torch.nn.BatchNorm2d:
             args = [ch[f]]
         elif m is Concat:
